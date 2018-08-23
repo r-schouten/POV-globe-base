@@ -19,13 +19,18 @@ class MotorController
     {
       myservo.attach(port); 
       myservo.writeMicroseconds(1000);
+      delay(500);
       Serial.println("servo attached");
     }
-    void setSpeed(int n)
+    void setSpeed(int speed)
     {
+      if(speed<1100)
+      {
+        speed=1000;
+      }
       Serial.print("writing Microseconds: ");
-      Serial.println(n);
-      myservo.writeMicroseconds(n);
+      Serial.println(speed);
+      myservo.writeMicroseconds(speed);
     }
     
 };

@@ -10,7 +10,7 @@ class UDPConnection
     unsigned int localUdpPort = 42069;  // local port to listen on
     char incomingPacket[255];  // buffer for incoming packets
     int *rpm;
-    int desiredSpeed;
+    int desiredSpeed = 0;
     boolean motorRunning = false;
     long packetReceivedTime;
 
@@ -20,19 +20,22 @@ class UDPConnection
       rpm = _rpm;
       _desiredSpeed = &desiredSpeed;
       _motorRunning = &motorRunning;
+      
       Serial.printf("Connecting to %s ", ssid);
       WiFi.begin(ssid, password);
-      /*IPAddress ip(192, 168, 137, 1); // where xx is the desired IP Address
-        IPAddress gateway(192, 168, 137, 1); // set gateway to match your network
-        IPAddress subnet(255, 255, 255, 0); // set subnet mask to match your network
-        WiFi.config(ip, gateway, subnet);*/
+      
       while (WiFi.status() != WL_CONNECTED)
       {
         delay(500);
         Serial.print(".");
       }
       Serial.println(" connected");
-
+      IPAddress ip(192, 168, 137, 101);
+      IPAddress gateway(192, 168, 137, 1);
+      IPAddress subnet(255, 255, 255, 0);
+      if (!WiFi.config(ip, gateway, subnet)) {
+        Serial.println("STA Failed to configure");
+      }
       Udp.begin(localUdpPort);
       Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
     }
@@ -48,18 +51,20 @@ class UDPConnection
         if (incomingPacket[0] == '0') //stop
         {
           Serial.println("stop");
-          motorRunning = false;
+          //motorRunning = false;
+          desiredSpeed = 0;
         }
-        else if (incomingPacket[0] == '1') //start
-        {
+        /*else if (incomingPacket[0] == '1') //start
+          {
           Serial.println("start");
           motorRunning = true;
-        }
+          }*/
         else if (incomingPacket[0] == '2') //speed update
         {
           String str(incomingPacket);
-          str = str.substring(1, str.length());
+          str = str.substring(1, len);
           desiredSpeed = str.toInt();
+          Serial.println(str);
           Serial.println(desiredSpeed);
         }
         Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
@@ -72,7 +77,8 @@ class UDPConnection
       }
       if (millis() - packetReceivedTime > 3000)
       {
-        motorRunning = false;
+        //motorRunning = false;
+        desiredSpeed = 0;
       }
     }
 };
